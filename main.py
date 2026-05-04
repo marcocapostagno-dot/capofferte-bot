@@ -2,6 +2,7 @@ import os
 import requests
 import random
 import time
+from datetime import datetime
 
 # =====================
 # CONFIG
@@ -9,10 +10,14 @@ import time
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 TAG = os.getenv("AFFILIATE_TAG", "capofferte-21")
 
-CHANNEL = "@Capofferte"
+# MULTI CANALE (scaling)
+CHANNELS = [
+    "@Capofferte",
+    # puoi aggiungerne altri in futuro
+]
 
 # =====================
-# KEYWORDS (categorie ad alta conversione)
+# KEYWORDS (base crescita)
 # =====================
 KEYWORDS = [
     "smartphone",
@@ -20,34 +25,55 @@ KEYWORDS = [
     "smartwatch",
     "powerbank",
     "aspirapolvere",
-    "accessori auto"
+    "accessori auto",
+    "tablet",
+    "monitor gaming"
 ]
 
 # =====================
-# PROFIT SCORE SYSTEM
+# AI SCORING (simulato ma evolutivo)
 # =====================
-def profit_score(keyword):
-    scores = {
+def ai_score(keyword):
+    weights = {
         "smartphone": 10,
+        "tablet": 9,
         "cuffie gaming": 9,
         "smartwatch": 8,
-        "powerbank": 7,
+        "monitor gaming": 8,
         "aspirapolvere": 7,
+        "powerbank": 7,
         "accessori auto": 6
     }
-    return scores.get(keyword, 5)
+    return weights.get(keyword, 5) + random.uniform(0, 1)
 
 # =====================
-# TELEGRAM SEND
+# TELEGRAM SEND (con immagine)
 # =====================
-def send_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    requests.post(url, data={
-        "chat_id": CHANNEL,
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": False
-    })
+def send_product(channel, title, link, image_url=None):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+
+    caption = f"""🔥 <b>OFFERTA AMAZON</b>
+
+📦 {title}
+
+💥 Prezzo scontato disponibile ora
+
+👉 <a href="{link}">VEDI OFFERTA</a>
+
+⚡ CapOfferte AI System"""
+
+    data = {
+        "chat_id": channel,
+        "caption": caption,
+        "parse_mode": "HTML"
+    }
+
+    if image_url:
+        data["photo"] = image_url
+    else:
+        data["photo"] = "https://via.placeholder.com/500x500.png?text=Amazon+Deal"
+
+    requests.post(url, data=data)
 
 # =====================
 # AMAZON LINK BUILDER
@@ -56,61 +82,57 @@ def build_link(keyword):
     return f"https://www.amazon.it/s?k={keyword.replace(' ', '+')}&tag={TAG}"
 
 # =====================
-# GENERAZIONE PRODOTTI (BASE + FUTURE READY API)
+# AI PRODUCT GENERATOR (base reale + scalabile API futura)
 # =====================
-def get_products(keyword):
+def get_ai_products(keyword):
     return [
         {
-            "title": f"{keyword.title()} - Offerta Amazon 🔥",
-            "keyword": keyword
+            "title": f"{keyword.title()} - Offerta Top Amazon 🔥",
+            "keyword": keyword,
+            "image": None  # futuro: Amazon API image
         }
     ]
 
 # =====================
-# FORMAT MESSAGGIO (ALTA CONVERSIONE)
+# AI SELECT BEST KEYWORD
 # =====================
-def format_message(title, link):
-    return f"""🔥 <b>OFFERTA AMAZON SELEZIONATA</b>
-
-📦 {title}
-
-💥 Prezzo scontato attivo ora
-
-👉 <a href="{link}">👉 APRI OFFERTA ORA</a>
-
-⚡ Solo oggi | CapOfferte"""
+def choose_best_keyword():
+    scored = [(k, ai_score(k)) for k in KEYWORDS]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return scored[0][0]
 
 # =====================
-# SCELTA MIGLIORE CATEGORIA
-# =====================
-def choose_best_keyword(keywords):
-    return sorted(keywords, key=lambda k: profit_score(k), reverse=True)[0]
-
-# =====================
-# FILTRO PRODOTTI
+# FILTER (anti spam + quality)
 # =====================
 def filter_products(products):
-    return products[:1]  # solo TOP 1 per conversione alta
+    return products[:1]
 
 # =====================
-# BOT LOOP (SYSTEM PRO)
+# MAIN LOOP (SCALING ENGINE)
 # =====================
 def run():
-    send_message("🚀 <b>CAPOFFERTES SYSTEM BUSINESS PRO ATTIVO</b>\n🔥 Ottimizzato per conversioni")
+    print("CAPOFFERTES SCALE BUSINESS AI STARTED")
 
     while True:
-        keyword = choose_best_keyword(KEYWORDS)
-        products = get_products(keyword)
+        keyword = choose_best_keyword()
+        products = get_ai_products(keyword)
         products = filter_products(products)
 
         for p in products:
             link = build_link(p["keyword"])
-            msg = format_message(p["title"], link)
-            send_message(msg)
-            time.sleep(10)
 
-        # timing ottimizzato conversioni
-        time.sleep(4 * 60 * 60)
+            for channel in CHANNELS:
+                send_product(
+                    channel=channel,
+                    title=p["title"],
+                    link=link,
+                    image_url=p.get("image")
+                )
+
+                time.sleep(3)
+
+        # ritmo scalabile (non spam)
+        time.sleep(3 * 60 * 60)
 
 # =====================
 # START
