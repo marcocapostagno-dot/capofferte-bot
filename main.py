@@ -122,7 +122,7 @@ def build_caption(title: str, link: str, price_text: str | None = None) -> str:
         "",
         f"👉 <a href=\"{safe_link}\">VEDI OFFERTA</a>",
         "",
-        "ℹ️ (paid link)",
+        "ℹ️ (affiliate link)",
         "⚡ CapOfferte AI System"
     ])
 
