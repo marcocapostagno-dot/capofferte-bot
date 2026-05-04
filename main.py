@@ -7,14 +7,12 @@ import time
 # CONFIG
 # =====================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ACCESS_KEY = os.getenv("AMAZON_ACCESS_KEY")  # per futuro upgrade API reale
-SECRET_KEY = os.getenv("AMAZON_SECRET_KEY")  # per futuro upgrade API reale
 TAG = os.getenv("AFFILIATE_TAG", "capofferte-21")
 
 CHANNEL = "@Capofferte"
 
 # =====================
-# KEYWORDS (categorie che hai scelto)
+# KEYWORDS (categorie ad alta conversione)
 # =====================
 KEYWORDS = [
     "smartphone",
@@ -24,6 +22,20 @@ KEYWORDS = [
     "aspirapolvere",
     "accessori auto"
 ]
+
+# =====================
+# HOT SCORE (priorità conversione)
+# =====================
+def hot_score(keyword):
+    scores = {
+        "smartphone": 10,
+        "cuffie gaming": 9,
+        "smartwatch": 8,
+        "powerbank": 7,
+        "aspirapolvere": 7,
+        "accessori auto": 6
+    }
+    return scores.get(keyword, 5)
 
 # =====================
 # TELEGRAM SEND
@@ -38,64 +50,70 @@ def send_message(text):
     })
 
 # =====================
-# LINK AFFILIATO AMAZON
+# LINK AMAZON AFFILIATO
 # =====================
 def build_link(keyword):
     return f"https://www.amazon.it/s?k={keyword.replace(' ', '+')}&tag={TAG}"
 
 # =====================
-# FETCH OFFERTE (VERSIONE PRO SEMPLICE MA REALE)
+# PRODOTTI (STRUTTURA PRONTA PER AMAZON API FUTURA)
 # =====================
 def get_products(keyword):
-    # struttura pronta per upgrade API vera Amazon
     return [
         {
-            "title": f"{keyword.title()} - Offerta Top Amazon 🔥",
+            "title": f"{keyword.title()} - Offerta Amazon 🔥",
             "keyword": keyword
         },
         {
-            "title": f"{keyword.title()} - Super Sconto Limitato ⚡",
+            "title": f"{keyword.title()} - Super Sconto ⚡",
             "keyword": keyword
         }
     ]
 
 # =====================
-# FORMATO MESSAGGIO OTTIMIZZATO (CTR ALTO)
-# =====================
-def format_message(title, link):
-    return f"""🔥 <b>{title}</b>
-
-💥 OFFERTA VERIFICATA AMAZON
-
-👉 <a href="{link}">👉 VEDI OFFERTA QUI</a>
-
-⚡ Solo oggi | CapOfferte
-"""
-
-# =====================
-# FILTRO SEMPLICE
+# FILTRO PRODOTTI
 # =====================
 def filter_products(products):
     return products[:2]
 
 # =====================
-# BOT LOOP
+# FORMAT MESSAGGIO (ALTO CTR)
+# =====================
+def format_message(title, link):
+    return f"""🔥 <b>OFFERTA AMAZON VERIFICATA</b>
+
+📦 {title}
+
+💥 Prezzo scontato disponibile ora
+
+👉 <a href="{link}">👉 APRI OFFERTA QUI</a>
+
+⚡ Solo oggi | CapOfferte
+"""
+
+# =====================
+# MAIN LOOP MONEY PRO
 # =====================
 def run():
-    send_message("🚀 <b>CapOfferte PRO avviato</b>\nOfferte attive ogni giorno 🔥")
+    send_message("🚀 <b>CAPOFFERTES MONEY PRO ATTIVO</b>\n🔥 Solo offerte selezionate")
 
     while True:
-        keyword = random.choice(KEYWORDS)
+        # categoria prioritaria
+        keyword = random.choice(
+            sorted(KEYWORDS, key=lambda x: hot_score(x), reverse=True)
+        )
+
         products = get_products(keyword)
         products = filter_products(products)
 
         for p in products:
             link = build_link(p["keyword"])
             msg = format_message(p["title"], link)
-            send_message(msg)
-            time.sleep(8)
 
-        # 5 offerte al giorno circa
+            send_message(msg)
+            time.sleep(10)
+
+        # ritmo ottimizzato conversioni
         time.sleep(4 * 60 * 60)
 
 # =====================
