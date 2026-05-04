@@ -24,9 +24,9 @@ KEYWORDS = [
 ]
 
 # =====================
-# HOT SCORE (priorità conversione)
+# PROFIT SCORE SYSTEM
 # =====================
-def hot_score(keyword):
+def profit_score(keyword):
     scores = {
         "smartphone": 10,
         "cuffie gaming": 9,
@@ -50,70 +50,66 @@ def send_message(text):
     })
 
 # =====================
-# LINK AMAZON AFFILIATO
+# AMAZON LINK BUILDER
 # =====================
 def build_link(keyword):
     return f"https://www.amazon.it/s?k={keyword.replace(' ', '+')}&tag={TAG}"
 
 # =====================
-# PRODOTTI (STRUTTURA PRONTA PER AMAZON API FUTURA)
+# GENERAZIONE PRODOTTI (BASE + FUTURE READY API)
 # =====================
 def get_products(keyword):
     return [
         {
             "title": f"{keyword.title()} - Offerta Amazon 🔥",
             "keyword": keyword
-        },
-        {
-            "title": f"{keyword.title()} - Super Sconto ⚡",
-            "keyword": keyword
         }
     ]
+
+# =====================
+# FORMAT MESSAGGIO (ALTA CONVERSIONE)
+# =====================
+def format_message(title, link):
+    return f"""🔥 <b>OFFERTA AMAZON SELEZIONATA</b>
+
+📦 {title}
+
+💥 Prezzo scontato attivo ora
+
+👉 <a href="{link}">👉 APRI OFFERTA ORA</a>
+
+⚡ Solo oggi | CapOfferte"""
+
+# =====================
+# SCELTA MIGLIORE CATEGORIA
+# =====================
+def choose_best_keyword(keywords):
+    return sorted(keywords, key=lambda k: profit_score(k), reverse=True)[0]
 
 # =====================
 # FILTRO PRODOTTI
 # =====================
 def filter_products(products):
-    return products[:2]
+    return products[:1]  # solo TOP 1 per conversione alta
 
 # =====================
-# FORMAT MESSAGGIO (ALTO CTR)
-# =====================
-def format_message(title, link):
-    return f"""🔥 <b>OFFERTA AMAZON VERIFICATA</b>
-
-📦 {title}
-
-💥 Prezzo scontato disponibile ora
-
-👉 <a href="{link}">👉 APRI OFFERTA QUI</a>
-
-⚡ Solo oggi | CapOfferte
-"""
-
-# =====================
-# MAIN LOOP MONEY PRO
+# BOT LOOP (SYSTEM PRO)
 # =====================
 def run():
-    send_message("🚀 <b>CAPOFFERTES MONEY PRO ATTIVO</b>\n🔥 Solo offerte selezionate")
+    send_message("🚀 <b>CAPOFFERTES SYSTEM BUSINESS PRO ATTIVO</b>\n🔥 Ottimizzato per conversioni")
 
     while True:
-        # categoria prioritaria
-        keyword = random.choice(
-            sorted(KEYWORDS, key=lambda x: hot_score(x), reverse=True)
-        )
-
+        keyword = choose_best_keyword(KEYWORDS)
         products = get_products(keyword)
         products = filter_products(products)
 
         for p in products:
             link = build_link(p["keyword"])
             msg = format_message(p["title"], link)
-
             send_message(msg)
             time.sleep(10)
 
-        # ritmo ottimizzato conversioni
+        # timing ottimizzato conversioni
         time.sleep(4 * 60 * 60)
 
 # =====================
