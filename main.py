@@ -7,13 +7,16 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL = "@Capofferte"
 AFFILIATE = "capofferte-21"
 
+def build_link(keyword):
+    return f"https://www.amazon.it/s?k={keyword.replace(' ', '+')}&tag=capofferte-21"
+
 # 🔥 OFFERTA REALI (feed base semplificato)
 FEED = [
-    ("🔥 TECH", "Smartwatch Amazfit in super sconto", "https://www.amazon.it/dp/B0?tag="),
-    ("📱 SMARTPHONE", "Powerbank 20000mAh -50%", "https://www.amazon.it/dp/B1?tag="),
-    ("🎮 GAMING", "Cuffie gaming RGB top qualità", "https://www.amazon.it/dp/B2?tag="),
-    ("🏠 CASA", "Aspirapolvere senza fili super sconto", "https://www.amazon.it/dp/B3?tag="),
-    ("🚗 AUTO", "Supporto telefono magnetico auto", "https://www.amazon.it/dp/B4?tag="),
+    ("🔥 TECH", "Smartwatch Amazfit in super sconto", build_link("smartwatch"),
+    ("📱 SMARTPHONE", "Powerbank 20000mAh -50%", build_link("powerbank"),
+    ("🎮 GAMING", "Cuffie gaming RGB top qualità", build_link("cuffie gaming"),
+    ("🏠 CASA", "Aspirapolvere senza fili super sconto", build_link("aspirapolvere"),
+    ("🚗 AUTO", "Supporto telefono magnetico auto", build_link("supporto"),
 ]
 
 def send_message(text):
