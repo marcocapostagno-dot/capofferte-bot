@@ -2,50 +2,104 @@ import os
 import requests
 import random
 import time
+import hashlib
+import hmac
+import base64
+from datetime import datetime
 
+# ======================
+# CONFIG
+# ======================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL = "@Capofferte"
-AFFILIATE = "capofferte-21"
+ACCESS_KEY = os.getenv("AMAZON_ACCESS_KEY")
+SECRET_KEY = os.getenv("AMAZON_SECRET_KEY")
+TAG = os.getenv("AFFILIATE_TAG", "capofferte-21")
 
+CHANNEL = "@Capofferte"
+
+KEYWORDS = [
+    "smartphone",
+    "cuffie gaming",
+    "smartwatch",
+    "powerbank",
+    "aspirapolvere",
+    "console gaming"
+]
+
+# ======================
+# TELEGRAM SEND
+# ======================
 def send_message(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    requests.post(url, data={
+    payload = {
         "chat_id": CHANNEL,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": False
-    })
+    }
+    requests.post(url, data=payload)
 
-def build_link(keyword):
-    return f"https://www.amazon.it/s?k={keyword.replace(' ', '+')}&tag={AFFILIATE}"
+# ======================
+# AMAZON LINK BUILDER (AFFILIATE)
+# ======================
+def build_amazon_link(asin):
+    return f"https://www.amazon.it/dp/{asin}?tag={TAG}"
 
-DEALS = [
-    ("🔥 TECH", "Smartwatch Amazfit in super sconto", "smartwatch amazfit"),
-    ("📱 SMARTPHONE", "Powerbank 20000mAh super offerta", "powerbank 20000mah"),
-    ("🎮 GAMING", "Cuffie gaming RGB top qualità", "cuffie gaming rgb"),
-    ("🏠 CASA", "Aspirapolvere senza fili in offerta", "aspirapolvere senza fili"),
-    ("🚗 AUTO", "Supporto telefono magnetico auto", "supporto telefono auto"),
-    ("💪 FITNESS", "Smartband fitness economico", "smartband fitness"),
-]
+# ======================
+# AMAZON API (SEMPLIFICATA STRUTTURA)
+# ======================
+def amazon_search(keyword):
+    """
+    NOTA: struttura pronta per API vera Amazon PA API 5.0
+    Qui simuliamo risposta finché non colleghi firma AWS.
+    """
 
+    fake_products = [
+        {
+            "title": f"{keyword.title()} - Offerta Amazon 🔥",
+            "asin": "B0EXAMPLE01"
+        },
+        {
+            "title": f"{keyword.title()} Super Sconto Limitato ⚡",
+            "asin": "B0EXAMPLE02"
+        },
+        {
+            "title": f"{keyword.title()} Bestseller Amazon ⭐",
+            "asin": "B0EXAMPLE03"
+        }
+    ]
+
+    return fake_products
+
+# ======================
+# MAIN LOOP
+# ======================
 def run_bot():
+    send_message("🚀 <b>CapOfferte Bot Avviato!</b>\nOfferte attive ogni giorno 🔥")
+
     while True:
-        picks = random.sample(DEALS, 3)
+        keyword = random.choice(KEYWORDS)
+        products = amazon_search(keyword)
 
-        for category, title, keyword in picks:
-            link = build_link(keyword)
+        for p in products:
+            link = build_amazon_link(p["asin"])
 
-            message = f"""🔥 <b>{category}</b>
+            msg = f"""🔥 <b>OFFERTA AMAZON</b>
 
-{title}
+📦 {p['title']}
 
-👉 <a href="{link}">SCOPRI SU AMAZON</a>
-"""
+👉 <a href="{link}">SCOPRI OFFERTA</a>
 
-            send_message(message)
-            time.sleep(10)
+⚡ CapOfferte - Amazon Deals"""
 
-        # pausa per non spammare troppo
+            send_message(msg)
+            time.sleep(8)
+
+        # 5 offerte al giorno circa
         time.sleep(4 * 60 * 60)
 
-run_bot()
+# ======================
+# START
+# ======================
+if __name__ == "__main__":
+    run_bot()
