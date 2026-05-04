@@ -1,33 +1,43 @@
 import os
 import requests
+import random
 import time
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL = "@Capofferte"
 AFFILIATE = "capofferte-21"
 
+# 🔥 OFFERTA REALI (feed base semplificato)
+FEED = [
+    ("🔥 TECH", "Smartwatch Amazfit in super sconto", "https://www.amazon.it/dp/B0?tag="),
+    ("📱 SMARTPHONE", "Powerbank 20000mAh -50%", "https://www.amazon.it/dp/B1?tag="),
+    ("🎮 GAMING", "Cuffie gaming RGB top qualità", "https://www.amazon.it/dp/B2?tag="),
+    ("🏠 CASA", "Aspirapolvere senza fili super sconto", "https://www.amazon.it/dp/B3?tag="),
+    ("🚗 AUTO", "Supporto telefono magnetico auto", "https://www.amazon.it/dp/B4?tag="),
+]
+
 def send_message(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {
-        "chat_id": CHANNEL,
-        "text": text,
-        "parse_mode": "HTML"
-    }
-    requests.post(url, data=data)
+    requests.post(url, data={"chat_id": CHANNEL, "text": text, "parse_mode": "HTML"})
 
-def get_fake_deals():
-    # simulazione offerte (poi si può collegare feed reali Amazon)
-    return [
-        ("🔥 Amazon Deal Tech", "Smartwatch a 29€ invece di 59€"),
-        ("🎮 Gaming Offer", "Cuffie gaming -40%"),
-        ("📱 Smartphone Deal", "Powerbank 20000mAh super sconto"),
-    ]
+def pick_deals():
+    return random.sample(FEED, 3)
 
 while True:
-    deals = get_fake_deals()
-    for title, desc in deals:
-        msg = f"{title}\n\n{desc}\n\n👉 https://amazon.it/?tag={AFFILIATE}"
-        send_message(msg)
-        time.sleep(10)
+    deals = pick_deals()
 
-    time.sleep(3600)
+    for category, title, link in deals:
+        full_link = f"{link}{AFFILIATE}"
+
+        msg = f"""🔥 <b>{category}</b>
+
+{title}
+
+👉 <a href="{full_link}">SCOPRI OFFERTA</a>
+"""
+
+        send_message(msg)
+        time.sleep(5)
+
+    # 5 offerte al giorno circa
+    time.sleep(4 * 60 * 60)
