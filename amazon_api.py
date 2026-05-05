@@ -32,11 +32,11 @@ def get_access_token() -> str:
         return TOKEN_CACHE["access_token"]
 
     data = {
-    "grant_type": "client_credentials",
-}
+        "grant_type": "client_credentials",
+    }
 
-if AMAZON_SCOPE:
-    data["scope"] = AMAZON_SCOPE
+    if AMAZON_SCOPE:
+        data["scope"] = AMAZON_SCOPE
 
     response = requests.post(
         AMAZON_TOKEN_URL,
