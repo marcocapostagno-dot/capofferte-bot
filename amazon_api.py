@@ -32,8 +32,11 @@ def get_access_token() -> str:
         return TOKEN_CACHE["access_token"]
 
     data = {
-        "grant_type": "client_credentials",
-        "scope": AMAZON_SCOPE or "creatorsapi/default",
+    "grant_type": "client_credentials",
+}
+
+if AMAZON_SCOPE:
+    data["scope"] = AMAZON_SCOPE
     }
 
     response = requests.post(
