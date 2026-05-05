@@ -37,7 +37,6 @@ def get_access_token() -> str:
 
 if AMAZON_SCOPE:
     data["scope"] = AMAZON_SCOPE
-    }
 
     response = requests.post(
         AMAZON_TOKEN_URL,
