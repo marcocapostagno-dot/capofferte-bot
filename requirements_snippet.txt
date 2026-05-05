@@ -1,0 +1,3 @@
+requests
+python-telegram-bot
+amazon-creatorsapi-python-sdk
