@@ -1,44 +1,26 @@
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-CHANNELS = [c.strip() for c in os.getenv("CHANNELS", "@Capofferte").split(",") if c.strip()]
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '').strip()
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '').strip()
+CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '1800'))
 
-AMAZON_ACCESS_KEY = os.getenv("AMAZON_ACCESS_KEY", "").strip()
-AMAZON_SECRET_KEY = os.getenv("AMAZON_SECRET_KEY", "").strip()
-AMAZON_PARTNER_TAG = os.getenv("AMAZON_PARTNER_TAG", "").strip()
-AMAZON_MARKETPLACE = os.getenv("AMAZON_MARKETPLACE", "www.amazon.it").strip()
-AMAZON_HOST = os.getenv("AMAZON_HOST", "webservices.amazon.it").strip()
-AMAZON_REGION = os.getenv("AMAZON_REGION", "eu-west-1").strip()
+AMAZON_CLIENT_ID = os.getenv('AMAZON_CLIENT_ID', '').strip()
+AMAZON_CLIENT_SECRET = os.getenv('AMAZON_CLIENT_SECRET', '').strip()
+AMAZON_PARTNER_TAG = os.getenv('AMAZON_PARTNER_TAG', '').strip()
+AMAZON_MARKETPLACE = os.getenv('AMAZON_MARKETPLACE', 'www.amazon.it').strip()
+AMAZON_REGION = os.getenv('AMAZON_REGION', 'eu').strip().lower()
+AMAZON_TOKEN_URL = os.getenv('AMAZON_TOKEN_URL', 'https://api.amazon.com/auth/o2/token').strip()
+AMAZON_API_BASE = os.getenv('AMAZON_API_BASE', '').strip()
+AMAZON_SCOPE = os.getenv('AMAZON_SCOPE', '').strip()
 
-SEARCH_INDEX = os.getenv("SEARCH_INDEX", "All").strip()
-KEYWORDS = [k.strip() for k in os.getenv(
-    "KEYWORDS",
-    "smartphone,cuffie gaming,smartwatch,powerbank,tablet,monitor gaming"
-).split(",") if k.strip()]
+MIN_PRICE = float(os.getenv('MIN_PRICE', '0'))
+MAX_PRICE = float(os.getenv('MAX_PRICE', '0'))
+MIN_DISCOUNT = int(os.getenv('MIN_DISCOUNT', '0'))
+TOP_N = int(os.getenv('TOP_N', '5'))
 
-MIN_PRICE_EUR = float(os.getenv("MIN_PRICE_EUR", "20"))
-MAX_PRICE_EUR = float(os.getenv("MAX_PRICE_EUR", "300"))
-MIN_SAVING_PERCENT = int(os.getenv("MIN_SAVING_PERCENT", "15"))
-MAX_ITEMS_PER_CYCLE = int(os.getenv("MAX_ITEMS_PER_CYCLE", "3"))
-POST_INTERVAL_SECONDS = int(os.getenv("POST_INTERVAL_SECONDS", "10800"))
-REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
-PAUSE_BETWEEN_MESSAGES_SECONDS = int(os.getenv("PAUSE_BETWEEN_MESSAGES_SECONDS", "2"))
-DB_PATH = os.getenv("DB_PATH", "bot_data.sqlite3")
-ONLY_AMAZON = os.getenv("ONLY_AMAZON", "false").strip().lower() == "true"
-ONLY_PRIME = os.getenv("ONLY_PRIME", "false").strip().lower() == "true"
-MAX_RESULTS_PER_KEYWORD = int(os.getenv("MAX_RESULTS_PER_KEYWORD", "10"))
+KEYWORDS = [
+    'Android', 'Xiaomi', 'Samsung', 'Tablet', 'iPhone', 'Smartphone', 'iPad'
+]
 
-REQUIRED = {
-    "BOT_TOKEN": BOT_TOKEN,
-    "AMAZON_ACCESS_KEY": AMAZON_ACCESS_KEY,
-    "AMAZON_SECRET_KEY": AMAZON_SECRET_KEY,
-    "AMAZON_PARTNER_TAG": AMAZON_PARTNER_TAG,
-}
-
-missing = [k for k, v in REQUIRED.items() if not v]
-if missing:
-    raise RuntimeError(f"Variabili ambiente mancanti: {', '.join(missing)}")
-if not CHANNELS:
-    raise RuntimeError("Nessun canale configurato in CHANNELS")
-if not KEYWORDS:
-    raise RuntimeError("Nessuna keyword configurata in KEYWORDS")
+if not AMAZON_API_BASE:
+    AMAZON_API_BASE = 'https://creator-connections.amazon.com'

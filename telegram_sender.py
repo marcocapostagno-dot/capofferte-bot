@@ -1,41 +1,18 @@
 import requests
-
-from create_messages import build_caption
-from settings import BOT_TOKEN, REQUEST_TIMEOUT
-
-session = requests.Session()
-BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+from settings import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 
-def telegram_api(method: str, payload: dict) -> dict:
-    response = session.post(f"{BASE_URL}/{method}", data=payload, timeout=REQUEST_TIMEOUT)
+def send_message(text: str):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        raise RuntimeError('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID')
+
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
+    payload = {
+        'chat_id': TELEGRAM_CHAT_ID,
+        'text': text,
+        'parse_mode': 'HTML',
+        'disable_web_page_preview': False,
+    }
+    response = requests.post(url, json=payload, timeout=30)
     response.raise_for_status()
-    data = response.json()
-    if not data.get("ok"):
-        raise RuntimeError(f"Telegram API error: {data}")
-    return data
-
-
-def send_product(channel: str, product: dict):
-    caption = build_caption(product)
-
-    if product.get("image"):
-        return telegram_api(
-            "sendPhoto",
-            {
-                "chat_id": channel,
-                "photo": product["image"],
-                "caption": caption,
-                "parse_mode": "HTML",
-            },
-        )
-
-    return telegram_api(
-        "sendMessage",
-        {
-            "chat_id": channel,
-            "text": caption,
-            "parse_mode": "HTML",
-            "disable_web_page_preview": False,
-        },
-    )
+    return response.json()

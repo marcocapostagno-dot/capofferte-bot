@@ -1,134 +1,104 @@
-import datetime as dt
-import hashlib
-import hmac
-import json
-
+import logging
+import time
 import requests
 
 from settings import (
-    AMAZON_ACCESS_KEY,
-    AMAZON_SECRET_KEY,
+    AMAZON_CLIENT_ID,
+    AMAZON_CLIENT_SECRET,
     AMAZON_PARTNER_TAG,
     AMAZON_MARKETPLACE,
-    AMAZON_HOST,
     AMAZON_REGION,
-    SEARCH_INDEX,
-    MIN_PRICE_EUR,
-    MAX_PRICE_EUR,
-    MIN_SAVING_PERCENT,
-    REQUEST_TIMEOUT,
-    MAX_RESULTS_PER_KEYWORD,
+    AMAZON_TOKEN_URL,
+    AMAZON_API_BASE,
+    AMAZON_SCOPE,
+    MIN_PRICE,
+    MAX_PRICE,
 )
+from response_parser import parse_items
 
-PAAPI_TARGET = "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"
-PAAPI_URI = "/paapi5/searchitems"
-session = requests.Session()
+logger = logging.getLogger(__name__)
 
-
-def sign(key, msg):
-    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
-
-
-def get_signature_key(key, date_stamp, region_name, service_name):
-    k_date = sign(("AWS4" + key).encode("utf-8"), date_stamp)
-    k_region = hmac.new(k_date, region_name.encode("utf-8"), hashlib.sha256).digest()
-    k_service = hmac.new(k_region, service_name.encode("utf-8"), hashlib.sha256).digest()
-    k_signing = hmac.new(k_service, b"aws4_request", hashlib.sha256).digest()
-    return k_signing
+_token_cache = {
+    'access_token': None,
+    'expires_at': 0,
+}
 
 
-def eur_to_minor_units(value: float) -> int:
-    return int(round(value * 100))
+def get_access_token() -> str:
+    now = time.time()
+    if _token_cache['access_token'] and now < _token_cache['expires_at'] - 60:
+        return _token_cache['access_token']
 
-
-def build_headers(payload_json: str):
-    now = dt.datetime.utcnow()
-    amz_date = now.strftime("%Y%m%dT%H%M%SZ")
-    date_stamp = now.strftime("%Y%m%d")
-    payload_hash = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
-
-    canonical_headers = (
-        "content-encoding:amz-1.0\n"
-        "content-type:application/json; charset=utf-8\n"
-        f"host:{AMAZON_HOST}\n"
-        f"x-amz-date:{amz_date}\n"
-        f"x-amz-target:{PAAPI_TARGET}\n"
-    )
-    signed_headers = "content-encoding;content-type;host;x-amz-date;x-amz-target"
-
-    canonical_request = "\n".join([
-        "POST",
-        PAAPI_URI,
-        "",
-        canonical_headers,
-        signed_headers,
-        payload_hash,
-    ])
-
-    algorithm = "AWS4-HMAC-SHA256"
-    credential_scope = f"{date_stamp}/{AMAZON_REGION}/ProductAdvertisingAPI/aws4_request"
-    string_to_sign = "\n".join([
-        algorithm,
-        amz_date,
-        credential_scope,
-        hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
-    ])
-
-    signing_key = get_signature_key(AMAZON_SECRET_KEY, date_stamp, AMAZON_REGION, "ProductAdvertisingAPI")
-    signature = hmac.new(signing_key, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
-    authorization_header = (
-        f"{algorithm} Credential={AMAZON_ACCESS_KEY}/{credential_scope}, "
-        f"SignedHeaders={signed_headers}, Signature={signature}"
-    )
-
-    return {
-        "Content-Encoding": "amz-1.0",
-        "Content-Type": "application/json; charset=utf-8",
-        "Host": AMAZON_HOST,
-        "X-Amz-Date": amz_date,
-        "X-Amz-Target": PAAPI_TARGET,
-        "Authorization": authorization_header,
+    data = {
+        'grant_type': 'client_credentials',
+        'client_id': AMAZON_CLIENT_ID,
+        'client_secret': AMAZON_CLIENT_SECRET,
     }
+    if AMAZON_SCOPE:
+        data['scope'] = AMAZON_SCOPE
 
-
-def search_items(keyword: str, search_index: str = SEARCH_INDEX) -> list:
-    payload = {
-        "Keywords": keyword,
-        "SearchIndex": search_index,
-        "ItemCount": MAX_RESULTS_PER_KEYWORD,
-        "ItemPage": 1,
-        "Marketplace": AMAZON_MARKETPLACE,
-        "PartnerTag": AMAZON_PARTNER_TAG,
-        "PartnerType": "Associates",
-        "MinPrice": eur_to_minor_units(MIN_PRICE_EUR),
-        "MaxPrice": eur_to_minor_units(MAX_PRICE_EUR),
-        "MinSavingPercent": MIN_SAVING_PERCENT,
-        "Resources": [
-            "Images.Primary.Large",
-            "ItemInfo.Title",
-            "ItemInfo.Features",
-            "Offers.Listings.Price",
-            "Offers.Listings.SavingBasis",
-            "Offers.Listings.Availability.Message",
-            "Offers.Listings.Availability.Type",
-            "Offers.Listings.MerchantInfo",
-            "Offers.Listings.ProgramEligibility.IsPrimeExclusive",
-            "Offers.Listings.DeliveryInfo.IsPrimeEligible"
-        ]
-    }
-
-    payload_json = json.dumps(payload, separators=(",", ":"))
-    headers = build_headers(payload_json)
-    response = session.post(
-        f"https://{AMAZON_HOST}{PAAPI_URI}",
-        data=payload_json,
-        headers=headers,
-        timeout=REQUEST_TIMEOUT,
+    response = requests.post(
+        AMAZON_TOKEN_URL,
+        data=data,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        timeout=30,
     )
     response.raise_for_status()
-    data = response.json()
+    payload = response.json()
 
-    if data.get("Errors"):
-        raise RuntimeError(str(data["Errors"]))
+    access_token = payload['access_token']
+    expires_in = int(payload.get('expires_in', 3600))
+    _token_cache['access_token'] = access_token
+    _token_cache['expires_at'] = now + expires_in
+    return access_token
 
-    return data.get("SearchResult", {}).get("Items", [])
+
+def search_items(keyword: str, search_index: str = 'All') -> list[dict]:
+    token = get_access_token()
+
+    payload = {
+        'keywords': keyword,
+        'partnerTag': AMAZON_PARTNER_TAG,
+        'marketplace': AMAZON_MARKETPLACE,
+        'searchIndex': search_index,
+    }
+
+    if MIN_PRICE > 0:
+        payload['minPrice'] = MIN_PRICE
+    if MAX_PRICE > 0:
+        payload['maxPrice'] = MAX_PRICE
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Amz-Partner-Tag': AMAZON_PARTNER_TAG,
+        'X-Amz-Marketplace': AMAZON_MARKETPLACE,
+        'X-Amz-Region': AMAZON_REGION,
+    }
+
+    candidate_paths = [
+        '/creators-api/searchitems',
+        '/creators/searchitems',
+        '/searchitems',
+        '/v1/searchitems',
+    ]
+
+    last_error = None
+    for path in candidate_paths:
+        url = AMAZON_API_BASE.rstrip('/') + path
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            if response.status_code == 404:
+                last_error = RuntimeError(f'404 on {url}')
+                continue
+            response.raise_for_status()
+            return parse_items(response.json())
+        except Exception as exc:
+            logger.warning('Tentativo Creators API fallito su %s: %s', url, exc)
+            last_error = exc
+
+    raise RuntimeError(
+        'Creators API request failed. Imposta AMAZON_API_BASE e AMAZON_SCOPE corretti dal pannello Amazon. '
+        f'Ultimo errore: {last_error}'
+    )

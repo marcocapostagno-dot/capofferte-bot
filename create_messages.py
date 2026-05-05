@@ -1,37 +1,22 @@
-from html import escape
+def build_message(item: dict) -> str:
+    title = item['title']
+    price = f"{item['price']:.2f}".replace('.', ',')
+    discount = item.get('discount_percent', 0)
+    url = item['url']
 
-
-def build_caption(product: dict) -> str:
-    title = escape(product["title"])
-    url = escape(product["url"], quote=True)
-    price = escape(str(product.get("price_display") or product.get("price_amount") or ""))
-    savings = escape(str(product.get("savings_percent") or ""))
-    keyword = escape(product.get("keyword", ""))
-    merchant = escape(product.get("merchant", "Amazon"))
-    saving_basis = escape(product.get("saving_basis_display", ""))
-
-    parts = [
-        "🔥 <b>OFFERTA AMAZON.IT</b>",
-        "",
-        f"📦 {title}",
-        f"💰 Prezzo: <b>{price}</b>",
-        f"📉 Sconto: <b>{savings}%</b>",
+    lines = [
+        '🔥 <b>Offerta Amazon</b>',
+        '',
+        f'<b>{title}</b>',
+        f'💶 Prezzo: <b>{price} €</b>',
     ]
 
-    if saving_basis:
-        parts.append(f"🏷️ Prezzo di riferimento: {saving_basis}")
-    if keyword:
-        parts.append(f"🔎 Keyword: {keyword}")
+    if discount > 0:
+        lines.append(f'🏷️ Sconto: <b>-{discount}%</b>')
 
-    for feature in product.get("features", [])[:2]:
-        parts.append(f"• {escape(feature)}")
-
-    parts.extend([
-        f"🏪 Venditore: {merchant}",
-        "",
-        f"👉 <a href=\"{url}\">Vedi offerta su Amazon</a>",
-        "",
-        "ℹ️ Link affiliato / paid link"
+    lines.extend([
+        '',
+        f'🛒 <a href="{url}">Apri offerta</a>'
     ])
 
-    return "\n".join(parts)
+    return '\n'.join(lines)
