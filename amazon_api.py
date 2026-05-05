@@ -33,10 +33,8 @@ def get_access_token() -> str:
 
     data = {
         "grant_type": "client_credentials",
+        "scope": AMAZON_SCOPE,
     }
-
-    if AMAZON_SCOPE:
-        data["scope"] = AMAZON_SCOPE
 
     response = requests.post(
         AMAZON_TOKEN_URL,
