@@ -30,14 +30,14 @@ def _build_api_client() -> DefaultApi:
     if not AMAZON_MARKETPLACE:
         raise RuntimeError("Missing AMAZON_MARKETPLACE")
 
-    configuration = Configuration(
-        username=AMAZON_CREDENTIAL_ID,
-        password=AMAZON_CREDENTIAL_SECRET,
-    )
-    configuration.access_token = AMAZON_CREDENTIAL_VERSION
-
-    api_client = ApiClient(configuration=configuration)
-    return DefaultApi(api_client)
+    configuration = Configuration()
+api_client = ApiClient(
+    configuration=configuration,
+    credential_id=AMAZON_CREDENTIAL_ID,
+    credential_secret=AMAZON_CREDENTIAL_SECRET,
+    version=AMAZON_CREDENTIAL_VERSION,
+)
+return DefaultApi(api_client)
 
 
 def search_items(keyword: str, search_index: str = "All") -> list[dict]:
