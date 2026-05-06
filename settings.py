@@ -9,9 +9,9 @@ AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET", "").strip()
 AMAZON_PARTNER_TAG = os.getenv("AMAZON_PARTNER_TAG", "").strip()
 
 AMAZON_MARKETPLACE = os.getenv("AMAZON_MARKETPLACE", "www.amazon.it").strip()
-AMAZON_TOKEN_URL = os.getenv("AMAZON_TOKEN_URL", "https://api.amazon.com/auth/o2/token").strip()
+AMAZON_TOKEN_URL = os.getenv("AMAZON_TOKEN_URL", "https://api.amazon.co.uk/auth/o2/token").strip()
 AMAZON_API_BASE = os.getenv("AMAZON_API_BASE", "https://creatorsapi.amazon").strip().rstrip("/")
-AMAZON_SCOPE = os.getenv("AMAZON_SCOPE", "creatorsapi/default").strip()
+AMAZON_SCOPE = os.getenv("AMAZON_SCOPE", "creatorsapi::default").strip()
 AMAZON_CREDENTIAL_VERSION = os.getenv("AMAZON_CREDENTIAL_VERSION", "3.2").strip()
 
 MIN_PRICE = float(os.getenv("MIN_PRICE", "0"))
