@@ -1,104 +1,81 @@
-import time
-import html
-import logging
-import requests
-
-from settings import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, CHECK_INTERVAL, KEYWORDS, TOP_N
-from amazon_api import search_items
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-_sent_asins = set()
+import os
+import sys
+import site
+import json
+import pkgutil
+import importlib
+import subprocess
 
 
-def send_telegram_message(text: str) -> None:
-    if not TELEGRAM_BOT_TOKEN:
-        raise RuntimeError("Missing TELEGRAM_BOT_TOKEN")
-    if not TELEGRAM_CHAT_ID:
-        raise RuntimeError("Missing TELEGRAM_CHAT_ID")
-
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": False,
-    }
-
-    response = requests.post(url, json=payload, timeout=30)
-    response.raise_for_status()
+def line(title: str):
+    print("\n" + "=" * 20 + f" {title} " + "=" * 20)
 
 
-def format_product(item: dict) -> str:
-    title = html.escape(item.get("title", "Prodotto Amazon"))
-    price = item.get("price", 0)
-    discount = item.get("discount_percent", 0)
-    url = item.get("url", "")
+line("PYTHON")
+print("executable:", sys.executable)
+print("version:", sys.version)
+print("cwd:", os.getcwd())
 
-    return (
-        f"🔥 <b>{title}</b>\n"
-        f"💰 Prezzo: {price:.2f}€\n"
-        f"🏷️ Sconto: {discount}%\n"
-        f"🛒 <a href=\"{url}\">Vai all'offerta</a>"
+line("SITE PACKAGES")
+try:
+    print("site.getsitepackages():", site.getsitepackages())
+except Exception as exc:
+    print("site.getsitepackages() error:", repr(exc))
+try:
+    print("site.getusersitepackages():", site.getusersitepackages())
+except Exception as exc:
+    print("site.getusersitepackages() error:", repr(exc))
+print("sys.path:")
+for p in sys.path:
+    print(" -", p)
+
+line("PIP LIST")
+try:
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "list", "--format=json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
     )
+    print("returncode:", result.returncode)
+    if result.stdout:
+        packages = json.loads(result.stdout)
+        interesting = [
+            p for p in packages
+            if any(k in p["name"].lower() for k in ["amazon", "creator", "paapi"])
+        ]
+        print("interesting packages:")
+        for p in interesting:
+            print(" -", p["name"], p["version"])
+    else:
+        print("stdout empty")
+    if result.stderr:
+        print("stderr:", result.stderr[:4000])
+except Exception as exc:
+    print("pip list error:", repr(exc))
 
+line("PKGUTIL MODULES")
+mods = sorted({m.name for m in pkgutil.iter_modules() if any(k in m.name.lower() for k in ["amazon", "creator", "paapi"])})
+for name in mods:
+    print(" -", name)
+if not mods:
+    print("No matching modules found")
 
-def collect_products() -> list[dict]:
-    results = []
+line("IMPORT TESTS")
+candidates = [
+    "creators_api",
+    "amazon_creatorsapi_python_sdk",
+    "amazon_creatorsapi",
+    "amazon_creators_api",
+    "creator_api",
+    "creators",
+]
+for name in candidates:
+    try:
+        mod = importlib.import_module(name)
+        print(f"OK import {name}:", getattr(mod, "__file__", "built-in"))
+    except Exception as exc:
+        print(f"FAIL import {name}: {exc!r}")
 
-    for keyword in KEYWORDS:
-        try:
-            items = search_items(keyword)
-            logger.info("Trovati %s prodotti per keyword=%s", len(items), keyword)
-            results.extend(items[:TOP_N])
-        except Exception as exc:
-            logger.exception("Errore su keyword %s: %s", keyword, exc)
-
-    return results
-
-
-def unique_new_products(products: list[dict]) -> list[dict]:
-    fresh = []
-    for item in products:
-        asin = item.get("asin")
-        if not asin:
-            continue
-        if asin in _sent_asins:
-            continue
-        _sent_asins.add(asin)
-        fresh.append(item)
-    return fresh
-
-
-def main() -> None:
-    logger.info("Bot avviato")
-
-    while True:
-        try:
-            products = collect_products()
-            products = unique_new_products(products)
-
-            if not products:
-                logger.warning("Nessun prodotto valido trovato in questo ciclo")
-            else:
-                for item in products:
-                    try:
-                        message = format_product(item)
-                        send_telegram_message(message)
-                        time.sleep(2)
-                    except Exception as exc:
-                        logger.exception("Errore invio Telegram: %s", exc)
-
-        except Exception as exc:
-            logger.exception("Errore generale del ciclo: %s", exc)
-
-        logger.info("Pausa di %s secondi", CHECK_INTERVAL)
-        time.sleep(CHECK_INTERVAL)
-
-
-if __name__ == "__main__":
-    main()
+line("DONE")
