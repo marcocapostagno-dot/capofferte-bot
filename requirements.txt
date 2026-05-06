@@ -1,2 +1,0 @@
-requests==2.32.3
-https://files.pythonhosted.org/packages/source/a/amazon-creatorsapi-python-sdk/amazon_creatorsapi_python_sdk-1.0.0.tar.gz
