@@ -47,10 +47,15 @@ def _get_access_token() -> str:
     basic = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
 
     headers = {
-        "Authorization": f"Basic {basic}",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-    }
+    "Authorization": f"Basic {basic}",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Accept": "application/json",
+}
+
+data = {
+    "grant_type": "client_credentials",
+    "scope": AMAZON_SCOPE or "creatorsapi::default",
+}
 
     data = {
         "grant_type": "client_credentials",
