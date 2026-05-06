@@ -9,6 +9,7 @@ AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET", "").strip()
 AMAZON_PARTNER_TAG = os.getenv("AMAZON_PARTNER_TAG", "").strip()
 
 AMAZON_MARKETPLACE = os.getenv("AMAZON_MARKETPLACE", "www.amazon.it").strip()
+AMAZON_REGION = os.getenv("AMAZON_REGION", "eu").strip().lower()
 AMAZON_TOKEN_URL = os.getenv("AMAZON_TOKEN_URL", "https://api.amazon.co.uk/auth/o2/token").strip()
 AMAZON_API_BASE = os.getenv("AMAZON_API_BASE", "https://creatorsapi.amazon").strip().rstrip("/")
 AMAZON_SCOPE = os.getenv("AMAZON_SCOPE", "creatorsapi::default").strip()
