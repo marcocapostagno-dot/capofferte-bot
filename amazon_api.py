@@ -1,6 +1,6 @@
 import logging
 from creatorsapi_python_sdk.api.default_api import DefaultApi
-from creatorsapi_python_sdk.models.search_items_request import SearchItemsRequestt
+from creatorsapi_python_sdk.models.search_items_request import SearchItemsRequest
 
 from settings import (
     AMAZON_CREDENTIAL_ID,
