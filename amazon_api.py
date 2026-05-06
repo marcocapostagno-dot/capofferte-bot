@@ -9,7 +9,6 @@ from settings import (
     AMAZON_API_BASE,
     AMAZON_CLIENT_ID,
     AMAZON_CLIENT_SECRET,
-    AMAZON_CREDENTIAL_VERSION,
     AMAZON_MARKETPLACE,
     AMAZON_PARTNER_TAG,
     AMAZON_SCOPE,
@@ -47,20 +46,16 @@ def _get_access_token() -> str:
     basic = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
 
     headers = {
-    "Authorization": f"Basic {basic}",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Accept": "application/json",
-}
-
-data = {
-    "grant_type": "client_credentials",
-    "scope": AMAZON_SCOPE or "creatorsapi::default",
-}
+        "Authorization": f"Basic {basic}",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+    }
 
     data = {
-    "grant_type": "client_credentials",
-    "scope": AMAZON_SCOPE or "creatorsapi::default",
-}
+        "grant_type": "client_credentials",
+        "scope": AMAZON_SCOPE or "creatorsapi::default",
+    }
+
     response = requests.post(
         AMAZON_TOKEN_URL,
         headers=headers,
@@ -88,16 +83,13 @@ data = {
 def _extract_price(raw_price: Any) -> float | None:
     if raw_price is None:
         return None
-
     if isinstance(raw_price, (int, float)):
         return float(raw_price)
-
     if isinstance(raw_price, dict):
         for key in ("amount", "value"):
             val = raw_price.get(key)
             if isinstance(val, (int, float)):
                 return float(val)
-
     return None
 
 
@@ -182,11 +174,11 @@ def search_items(keyword: str, search_index: str = "All") -> list[dict]:
     token = _get_access_token()
 
     headers = {
-    "Authorization": f"Bearer {token}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "x-marketplace": AMAZON_MARKETPLACE,
-}
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "x-marketplace": AMAZON_MARKETPLACE,
+    }
 
     payload = {
         "keywords": keyword,
