@@ -58,10 +58,9 @@ data = {
 }
 
     data = {
-        "grant_type": "client_credentials",
-        "scope": AMAZON_SCOPE or "creatorsapi/default",
-    }
-
+    "grant_type": "client_credentials",
+    "scope": AMAZON_SCOPE or "creatorsapi::default",
+}
     response = requests.post(
         AMAZON_TOKEN_URL,
         headers=headers,
@@ -183,11 +182,11 @@ def search_items(keyword: str, search_index: str = "All") -> list[dict]:
     token = _get_access_token()
 
     headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "x-marketplace": AMAZON_MARKETPLACE,
-    }
+    "Authorization": f"Bearer {token}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "x-marketplace": AMAZON_MARKETPLACE,
+}
 
     payload = {
         "keywords": keyword,
