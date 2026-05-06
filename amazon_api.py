@@ -48,10 +48,9 @@ def search_items(keyword: str, search_index: str = "All") -> list[dict]:
         partnerTag=AMAZON_PARTNER_TAG,
         searchIndex=search_index,
         resources=[
-            "Images.Primary.Small",
-            "ItemInfo.Title",
-            "OffersV2.Listings.Price",
-            "OffersV2.Listings.SavingBasis",
+            "images.primary.small",
+            "itemInfo.title",
+            "offersV2.listings.price",
         ],
     )
 
@@ -97,11 +96,8 @@ def search_items(keyword: str, search_index: str = "All") -> list[dict]:
             if images and getattr(images, "primary", None) and getattr(images.primary, "small", None):
                 image = getattr(images.primary.small, "url", None)
 
-            listings = None
             offers = getattr(item, "offers_v2", None)
-            if offers:
-                listings = getattr(offers, "listings", None)
-
+            listings = getattr(offers, "listings", None) if offers else None
             if not listings:
                 continue
 
@@ -112,9 +108,6 @@ def search_items(keyword: str, search_index: str = "All") -> list[dict]:
                 price = getattr(first_listing.price, "amount", None)
 
             discount = 0
-            saving_basis = getattr(first_listing, "saving_basis", None)
-            if saving_basis and getattr(saving_basis, "savings", None):
-                discount = getattr(saving_basis.savings, "percentage", 0) or 0
 
             if not asin or not title or not url or price is None:
                 continue
